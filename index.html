@@ -11,6 +11,14 @@
   <!-- Preload critical CSS -->
   <link href="dist/output.css" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'"/>
   <noscript><link href="dist/output.css" rel="stylesheet"/></noscript>
+  <link href="dist/gallery.css" rel="stylesheet"/>
+  <!-- Les photos viennent de Cloudinary : ouvrir la connexion au plus tôt évite
+       d'attendre DNS + TLS au moment où la première vignette est demandée. -->
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin/>
+  <link rel="dns-prefetch" href="https://res.cloudinary.com"/>
+  <!-- La liste des photos est demandée dès le parsing du <head>, sans attendre
+       que gallery.js soit téléchargé et exécuté. -->
+  <link rel="preload" href="photos.json" as="fetch" crossorigin/>
   <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- Fonts -->
@@ -20,8 +28,6 @@
    <!-- Start - Fancybox Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
-  <script src="https://code.jquery.com/jquery-3.6.3.min.js"
-    integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
   <!-- Tailwind CSS -->
    <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -84,328 +90,12 @@
     <h1 class="text-4xl pt-10 pb-8 font-bold">PORTFOLIO</h1>
     <section class="text-neutral-700">
       <div class="container w-full">
-         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
-          
-          <!-- 2 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678737/0034_34A_vsvmet.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678737/0034_34A_vsvmet.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 2 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678729/0028_29_sxkjpb.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678729/0028_29_sxkjpb.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 3 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678731/0024_25_smca7h.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678731/0024_25_smca7h.jpg" />
-                </a>
-              </div>
-            </div>
-          <!-- 4 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678735/0026_27_tv68ln.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678735/0026_27_tv68ln.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 5 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678725/0021_22_hmzzpv.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678725/0021_22_hmzzpv.jpg" />
-                </a>
-              </div>
-            </div>
-
-           <!-- 6 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678735/0012_13_srenhm.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678735/0012_13_srenhm.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 7 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678720/0010_11_ne0cff.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678720/0010_11_ne0cff.jpg" />
-                </a>
-              </div>
-            </div>
-          <!-- 8 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678725/0004_5_j376xv.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678725/0004_5_j376xv.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 9 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678698/0033_34_uzdqpk.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678698/0033_34_uzdqpk.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 10 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678703/0031_32_aopc39.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678703/0031_32_aopc39.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 11 --> 
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678696/0004_5_ycsuhg.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a person standing in front of a rock formation"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678696/0004_5_ycsuhg.jpg" />
-                </a>
-              </div>
-            </div>
-          <!-- 12 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678698/0017_18_i7nmoa.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a cat laying on top of a sidewalk next to the ocean"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678698/0017_18_i7nmoa.jpg" />
-                </a>
-              </div>
-            </div>
-          <!-- 13 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678515/0024_25_hhc1ny.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a man standing on a beach next to the ocean"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678515/0024_25_hhc1ny.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 14 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678699/0021_22_j44x0c.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a snow covered mountain with trees on the side"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678699/0021_22_j44x0c.jpg" />
-                </a>
-              </div>
-            </div>
-          <!-- 15 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678498/0002_3_awr5w0.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a branch of a plant floating in a body of water"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678498/0002_3_awr5w0.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 16 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678384/8650_-_2025.1.30_-_-_Kodak_FunSaver_27exp-12_vkocif.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a branch of a plant floating in a body of water"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678384/8650_-_2025.1.30_-_-_Kodak_FunSaver_27exp-12_vkocif.jpg" />
-                </a>
-              </div>
-            </div>
-            
-          <!-- 17 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678417/8650_-_2025.1.30_-_-_Kodak_FunSaver_27exp-4_ky5dby.jpg"
-                  data-fancybox="gallery">
-                  <img alt="a branch of a plant floating in a body of water"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678417/8650_-_2025.1.30_-_-_Kodak_FunSaver_27exp-4_ky5dby.jpg" />
-                </a>
-              </div>
-            </div>
-
-        <!-- 18 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678413/8650_-_2025.1.30_-_-_Kodak_FunSaver_27exp-3_xi8igb.jpg"
-                  data-fancybox="gallery">
-                  <img alt="the ocean"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678413/8650_-_2025.1.30_-_-_Kodak_FunSaver_27exp-3_xi8igb.jpg" />
-                </a>
-              </div>
-            </div>
-
-        
-        <!-- 19 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678405/8650_-_2025.1.30_-_-_Kodak_FunSaver_27exp-7_wddeow.jpg"
-                  data-fancybox="gallery">
-                  <img alt="hotel hall"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678405/8650_-_2025.1.30_-_-_Kodak_FunSaver_27exp-7_wddeow.jpg" />
-                </a>
-              </div>
-            </div>
-
-          <!-- 20 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678466/002426_rjb7qx.jpg"
-                  data-fancybox="gallery">
-                  <img alt="in the forest"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678466/002426_rjb7qx.jpg" />
-                </a>
-              </div>
-            </div>
-        
-         <!-- 21 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678457/002931_knqbpv.jpg"
-                  data-fancybox="gallery">
-                  <img alt="bliss"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678457/002931_knqbpv.jpg" />
-                </a>
-              </div>
-            </div>
-
-        <!-- 22 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678433/002628_kqzr9y.jpg"
-                  data-fancybox="gallery">
-                  <img alt="bliss"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678433/002628_kqzr9y.jpg" />
-                </a>
-              </div>
-            </div>
-        <!-- 23 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678424/003032_mjaupx.jpg"
-                  data-fancybox="gallery">
-                  <img alt="bliss"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678424/003032_mjaupx.jpg" />
-                </a>
-              </div>
-            </div>
-          
-        <!-- 24 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678461/0035E_lwc1ie.jpg"
-                  data-fancybox="gallery">
-                  <img alt="bliss"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678461/0035E_lwc1ie.jpg" />
-                </a>
-              </div>
-            </div>
-        
-        <!-- 25 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678454/001315_w9jhvx.jpg"
-                  data-fancybox="gallery">
-                  <img alt="bliss"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678454/001315_w9jhvx.jpg" />
-                </a>
-              </div>
-            </div>
-        
-         <!-- 26 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678437/003335_kjxvaz.jpg"
-                  data-fancybox="gallery">
-                  <img alt="bliss"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678437/003335_kjxvaz.jpg" />
-                </a>
-              </div>
-            </div>
-        
-        <!-- 27 -->
-            <div class="w-full p-1">
-              <div class="col-span-2 overflow-hidden h-full w-full">
-                <a href="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678451/000810_qc1hgs.jpg"
-                  data-fancybox="gallery">
-                  <img alt="bliss"
-                    class="block h-full w-full object-cover object-center opacity-0 animate-fade-in transition duration-500 transform scale-100 hover:scale-110"
-                    src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678451/000810_qc1hgs.jpg" />
-                </a>
-              </div>
-            </div>
-        
-        </div>
+         <!-- La grille est rendue par dist/gallery.js à partir de photos.json.
+               Ajouter une photo = ajouter une entrée dans photos.json, rien à toucher ici. -->
+          <div id="gallery" data-source="photos.json"></div>
+          <noscript>
+            <p class="gallery-error">Ce portfolio a besoin de JavaScript pour afficher les photos.</p>
+          </noscript>
       </div>
     </section>
   </div>
@@ -418,11 +108,9 @@
     <p class="mt-8 text-xs text-gray-300 dark:text-gray-300 text-center">© 2025 ismaël ayachi</p>
    </div>
   </footer>
-  <!-- Script for the LightBox -->
-  <script>
-    Fancybox.bind("[data-fancybox]", {});
-  </script>
-  <script src="dist/fade_in.js"></script>
+  <!-- gallery.js construit la grille puis initialise la lightbox lui-même :
+       Fancybox doit être branché après l'insertion des vignettes. -->
+  <script src="dist/gallery.js"></script>
   <script src="dist/menu.js"></script>
  </body>
 </html>

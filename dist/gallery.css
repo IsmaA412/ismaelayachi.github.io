@@ -1,0 +1,82 @@
+/**
+ * Styles de la grille du portfolio.
+ *
+ * Volontairement en CSS simple plutôt qu'en classes Tailwind : les vignettes
+ * sont injectées par gallery.js après le chargement de la page, et ce fichier
+ * garantit leur rendu sans dépendre du moment où Tailwind analyse le DOM.
+ */
+
+#gallery {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  /* Les vignettes sont insérées par JavaScript, après le chargement de
+     photos.json. Sans hauteur réservée, le pied de page s'affiche d'abord juste
+     sous le titre puis se fait repousser d'un coup : un décalage très visible,
+     et la principale source de mauvais score CLS de la page. Réserver une
+     hauteur d'écran maintient le pied de page hors du champ jusqu'au rendu. */
+  min-height: 100vh;
+}
+
+@media (min-width: 640px) {
+  #gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  #gallery {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  #gallery {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* La case réserve sa place avant même que l'image arrive : le ratio et la
+   couleur de fond sont posés en ligne par gallery.js, d'où l'absence de
+   décalage de la page pendant le chargement. */
+.tile {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background-color: #e5e5e5;
+}
+
+.tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transition: opacity 600ms ease, transform 500ms ease;
+}
+
+.tile img.is-loaded {
+  opacity: 1;
+}
+
+.tile:hover img.is-loaded {
+  transform: scale(1.1);
+}
+
+.gallery-error {
+  grid-column: 1 / -1;
+  padding: 2rem 0;
+  text-align: center;
+  color: #737373;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile img {
+    transition: opacity 1ms linear;
+  }
+
+  .tile:hover img.is-loaded {
+    transform: none;
+  }
+}

@@ -11,7 +11,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="./assets/favicon.ico" />
   <link rel="stylesheet" href="output.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
   <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- Start - Fonts -->
@@ -121,10 +121,16 @@
       </section>
       <div class="col-span-2 md:col-span-1 flex relative">
         <div
-          class="bg-white dark:bg-neutral-900 p-5 pb-20 m-6 md:m-12 shadow-lg border border-gray-100 dark:border-neutral-800  hover:rotate-0 transition duration-500 rotate-6 relative">
+          class="bg-white dark:bg-neutral-900 p-5 pb-20 m-6 md:m-12 shadow-lg border border-gray-100 dark:border-neutral-800  hover:rotate-0 transition duration-500 rotate-6 relative w-full">
           <img
-            src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,w_4000,dpr_auto,f_auto,q_50/v1752678736/0032_33_btnh7y.jpg"
-            alt="" class="flex flex-col aspect-square w-full object-cover h-auto max-h-full" />
+            src="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,ar_1:1,w_600,f_auto,q_auto/v1752678736/0032_33_btnh7y.jpg"
+            srcset="https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,ar_1:1,w_400,f_auto,q_auto/v1752678736/0032_33_btnh7y.jpg 400w,
+                    https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,ar_1:1,w_600,f_auto,q_auto/v1752678736/0032_33_btnh7y.jpg 600w,
+                    https://res.cloudinary.com/dlixnmrln/image/upload/c_fill,ar_1:1,w_900,f_auto,q_auto/v1752678736/0032_33_btnh7y.jpg 900w"
+            sizes="(min-width: 768px) 40vw, 90vw"
+            width="600" height="600" decoding="async"
+            alt="Portrait d'Ismaël Ayachi"
+            class="flex flex-col aspect-square w-full object-cover h-auto max-h-full" />
         </div>
       </div>
     </div>

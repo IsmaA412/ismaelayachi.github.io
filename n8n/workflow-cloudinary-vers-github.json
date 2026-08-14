@@ -1,0 +1,381 @@
+{
+  "name": "Cloudinary vers portfolio (photos.json)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cloudinary-photo",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "webhook-cloudinary",
+      "name": "Webhook Cloudinary",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "cloudinary-photo"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "proprietaire",
+              "value": "IsmaA412",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "depot",
+              "value": "ismaelayachi.github.io",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "branche",
+              "value": "main",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "chemin",
+              "value": "photos.json",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "tagRequis",
+              "value": "portfolio",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "configuration",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Vérifie que la requête vient bien de Cloudinary.\n//\n// Ce webhook est une URL publique qui déclenche un commit sur le dépôt : sans\n// cette vérification, n'importe qui connaissant l'adresse pourrait publier une\n// image sur le site. Cloudinary signe chaque notification, on recalcule la\n// signature et on refuse tout ce qui ne correspond pas.\n//\n// Formule Cloudinary : SHA1(corps_brut + timestamp + api_secret)\n\nconst crypto = require('crypto');\n\nconst secret = $env.CLOUDINARY_API_SECRET;\nif (!secret) {\n  throw new Error(\n    \"Variable d'environnement CLOUDINARY_API_SECRET absente côté n8n.\"\n  );\n}\n\nconst entree = $('Webhook Cloudinary').first();\nconst headers = entree.json.headers || {};\nconst signatureRecue = headers['x-cld-signature'];\nconst timestamp = headers['x-cld-timestamp'];\n\nif (!signatureRecue || !timestamp) {\n  throw new Error('Requête non signée : en-têtes Cloudinary manquants.');\n}\n\n// Le corps doit être repris tel quel, octet pour octet. Ré-encoder l'objet JSON\n// analysé produirait une chaîne différente et donc une signature invalide :\n// c'est pourquoi l'option « Raw Body » est activée sur le nœud Webhook.\nconst corpsBrut =\n  typeof entree.json.body === 'string'\n    ? entree.json.body\n    : Buffer.from(entree.binary.data.data, 'base64').toString('utf8');\n\nconst attendue = crypto\n  .createHash('sha1')\n  .update(corpsBrut + timestamp + secret)\n  .digest('hex');\n\n// Comparaison à durée constante : une comparaison classique fuite le nombre de\n// caractères corrects et permet de reconstituer la signature essai par essai.\nconst a = Buffer.from(attendue);\nconst b = Buffer.from(String(signatureRecue));\nif (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {\n  throw new Error('Signature Cloudinary invalide : requête rejetée.');\n}\n\n// Rejette les notifications trop anciennes (rejeu d'une requête interceptée).\nconst ageSecondes = Math.floor(Date.now() / 1000) - Number(timestamp);\nif (ageSecondes > 3600) {\n  throw new Error(`Notification trop ancienne (${ageSecondes} s) : rejetée.`);\n}\n\nreturn [{ json: JSON.parse(corpsBrut) }];\n"
+      },
+      "id": "verif-signature",
+      "name": "Vérifier la signature Cloudinary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.notification_type }}",
+              "rightValue": "upload"
+            },
+            {
+              "id": "c2",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.resource_type }}",
+              "rightValue": "image"
+            },
+            {
+              "id": "c3",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              },
+              "leftValue": "={{ $json.tags }}",
+              "rightValue": "={{ $('Configuration').first().json.tagRequis }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "filtre",
+      "name": "Photo destinée au portfolio ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/{{ $('Configuration').first().json.proprietaire }}/{{ $('Configuration').first().json.depot }}/contents/{{ $('Configuration').first().json.chemin }}?ref={{ $('Configuration').first().json.branche }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-portfolio-sync"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "lire-json",
+      "name": "Lire photos.json",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Insère la nouvelle photo dans photos.json.\n//\n// Le fichier reste la source unique de la galerie : on le lit, on y ajoute une\n// entrée, on le réécrit. Aucune modification de HTML n'est nécessaire.\n\nconst config = $('Configuration').first().json;\nconst photo = $('Vérifier la signature Cloudinary').first().json;\nconst fichier = $('Lire photos.json').first().json;\n\n// L'API GitHub renvoie le contenu encodé en base64.\nconst actuel = JSON.parse(\n  Buffer.from(fichier.content, 'base64').toString('utf8')\n);\n\n// Cloudinary place les métadonnées saisies dans la médiathèque ici. Le texte\n// alternatif décrit la photo pour les lecteurs d'écran et les moteurs de\n// recherche : à renseigner dans Cloudinary, champ « alt ».\nconst contexte = (photo.context && photo.context.custom) || {};\n\n// Couleur dominante, utilisée comme aplat pendant le chargement de la vignette.\n// Présente seulement si l'analyse des couleurs est activée sur le preset\n// d'upload ; sinon la galerie retombe sur un gris neutre.\nlet couleur = null;\nif (Array.isArray(photo.colors) && photo.colors.length > 0) {\n  couleur = photo.colors[0][0];\n}\n\nconst nouvelle = {\n  id: photo.public_id,\n  version: String(photo.version),\n  format: photo.format,\n  width: photo.width,\n  height: photo.height,\n  alt: contexte.alt || contexte.caption || '',\n};\nif (couleur) {\n  nouvelle.color = couleur;\n}\n\n// Cloudinary peut renvoyer plusieurs fois la même notification. Sans ce filtre,\n// la photo apparaîtrait en double dans la galerie.\nconst dejaPresente = actuel.photos.some((p) => p.id === nouvelle.id);\nif (dejaPresente) {\n  return [\n    {\n      json: {\n        ignore: true,\n        raison: `Photo « ${nouvelle.id} » déjà présente dans photos.json.`,\n      },\n    },\n  ];\n}\n\n// Les nouveautés en tête de galerie.\nactuel.photos.unshift(nouvelle);\n\nconst contenu = JSON.stringify(actuel, null, 2) + '\\n';\n\nreturn [\n  {\n    json: {\n      ignore: false,\n      photo: nouvelle,\n      total: actuel.photos.length,\n      sha: fichier.sha,\n      message: `Ajout de la photo ${nouvelle.id}`,\n      contenuBase64: Buffer.from(contenu, 'utf8').toString('base64'),\n      urlContenu: `https://api.github.com/repos/${config.proprietaire}/${config.depot}/contents/${config.chemin}`,\n      branche: config.branche,\n    },\n  },\n];\n"
+      },
+      "id": "construire",
+      "name": "Ajouter la photo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d1",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.ignore }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "filtre-doublon",
+      "name": "Nouvelle photo ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $json.urlContenu }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-portfolio-sync"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $json.message, content: $json.contenuBase64, sha: $json.sha, branch: $json.branche }) }}",
+        "options": {}
+      },
+      "id": "commit",
+      "name": "Commit photos.json",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ statut: 'publiee', photo: $('Ajouter la photo').first().json.photo.id, total: $('Ajouter la photo').first().json.total }) }}",
+        "options": {}
+      },
+      "id": "reponse-ok",
+      "name": "Réponse : publiée",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ statut: 'ignoree', raison: $json.raison || 'La photo ne porte pas le tag requis.' }) }}",
+        "options": {}
+      },
+      "id": "reponse-ignore",
+      "name": "Réponse : ignorée",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Vérifier la signature Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vérifier la signature Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Photo destinée au portfolio ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Photo destinée au portfolio ?": {
+      "main": [
+        [
+          {
+            "node": "Lire photos.json",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse : ignorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire photos.json": {
+      "main": [
+        [
+          {
+            "node": "Ajouter la photo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ajouter la photo": {
+      "main": [
+        [
+          {
+            "node": "Nouvelle photo ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nouvelle photo ?": {
+      "main": [
+        [
+          {
+            "node": "Commit photos.json",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse : ignorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit photos.json": {
+      "main": [
+        [
+          {
+            "node": "Réponse : publiée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
