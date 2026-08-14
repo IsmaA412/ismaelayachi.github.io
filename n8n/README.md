@@ -43,8 +43,23 @@ n8n lit ses variables d'environnement **au démarrage** : il faut donc le
 relancer avec la variable définie.
 
 ```bash
-CLOUDINARY_API_SECRET=votre_api_secret n8n start
+CLOUDINARY_API_SECRET=votre_api_secret N8N_BLOCK_ENV_ACCESS_IN_NODE=false n8n start
 ```
+
+**`N8N_BLOCK_ENV_ACCESS_IN_NODE=false` est obligatoire.** Depuis n8n 2.x,
+l'accès à `$env` depuis un nœud Code est bloqué par défaut ; sans ce réglage, la
+vérification de signature échoue avec `access to env vars denied`. Le blocage
+est décidé ici, dans le code de n8n :
+
+```js
+// n8n-workflow/dist/cjs/workflow-data-proxy-env-provider.js
+const isEnvAccessBlocked = process.env.N8N_BLOCK_ENV_ACCESS_IN_NODE !== 'false';
+```
+
+> Ce réglage vaut pour toute l'instance : n'importe quel nœud Code de n'importe
+> quel workflow pourra lire toutes vos variables d'environnement. Sur une
+> instance personnelle qui n'exécute que vos propres workflows, c'est sans
+> conséquence. Sur une instance partagée, ça ne l'est pas.
 
 Derrière un tunnel, cette commande s'accompagne de `WEBHOOK_URL` — voir
 l'étape 4, qui donne la commande de démarrage complète.
@@ -113,6 +128,7 @@ ce terminal ouvert, puis relancez n8n en lui donnant cette adresse :
 ```bash
 WEBHOOK_URL=https://votre-tunnel.trycloudflare.com \
 CLOUDINARY_API_SECRET=votre_api_secret \
+N8N_BLOCK_ENV_ACCESS_IN_NODE=false \
 n8n start
 ```
 
@@ -164,7 +180,7 @@ cloudflared tunnel --url http://localhost:5678
 ```
 
 ```bash
-WEBHOOK_URL=https://votre-tunnel.trycloudflare.com CLOUDINARY_API_SECRET=votre_api_secret n8n start
+WEBHOOK_URL=https://votre-tunnel.trycloudflare.com CLOUDINARY_API_SECRET=votre_api_secret N8N_BLOCK_ENV_ACCESS_IN_NODE=false n8n start
 ```
 
 Si `cloudflared` a été relancé depuis la dernière fois, son URL a changé : il
@@ -195,8 +211,9 @@ fois le problème corrigé.
 
 | Symptôme | Cause | Correctif |
 | --- | --- | --- |
-| Aucune exécution listée | Cloudinary n'a pas joint n8n | Tunnel coupé, ou URL périmée dans Cloudinary |
-| Rouge sur *Vérifier la signature* | `CLOUDINARY_API_SECRET` absent ou faux | Relancer n8n avec la bonne valeur |
+| Aucune exécution listée | Workflow inactif, ou Cloudinary n'a pas joint n8n | Activer le workflow (interrupteur en haut à droite) ; vérifier tunnel et URL |
+| Rouge sur *Vérifier la signature*, `access to env vars denied` | `N8N_BLOCK_ENV_ACCESS_IN_NODE` non défini | Relancer n8n avec `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` |
+| Rouge sur *Vérifier la signature*, autre message | `CLOUDINARY_API_SECRET` absent ou faux | Relancer n8n avec la bonne valeur |
 | `statut: "ignoree"` | Tag `portfolio` manquant, ou photo déjà publiée | Ajouter le tag et relancer l'exécution |
 | Erreur 409 sur le commit | Deux uploads simultanés | Relancer l'exécution, sans rien changer |
 
@@ -255,7 +272,10 @@ suffit alors de relancer l'exécution depuis n8n.
 4. Après le déploiement Pages (environ une minute), la photo est en tête de
    galerie.
 
-**L'exécution est rouge sur la vérification de signature** — `CLOUDINARY_API_SECRET`
+**`access to env vars denied` sur la vérification de signature** — il manque
+`N8N_BLOCK_ENV_ACCESS_IN_NODE=false` au démarrage de n8n.
+
+**Autre erreur sur la vérification de signature** — `CLOUDINARY_API_SECRET`
 est absent ou incorrect. Vérifiez surtout que n8n a bien été **relancé** après
 avoir défini la variable : il ne la relit pas à chaud.
 
