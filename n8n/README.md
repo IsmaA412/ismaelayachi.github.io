@@ -73,9 +73,10 @@ echo 'export CLOUDINARY_API_SECRET=votre_api_secret' >> ~/.zshrc
 En Docker, ajoutez la ligne au `environment:` du service n8n et redémarrez le
 conteneur.
 
-> La vérification de signature utilise l'API Web Crypto, native dans Node.
-> Contrairement au module `crypto` de Node, elle ne demande aucune
-> configuration supplémentaire de n8n.
+> La vérification de signature embarque sa propre implémentation de SHA-1, en
+> JavaScript pur. Le bac à sable des nœuds Code n'expose ni le module `crypto`
+> de Node ni l'API Web Crypto globale : `NODE_FUNCTION_ALLOW_BUILTIN` est donc
+> inutile ici.
 
 ## 3. Importer le workflow
 
@@ -213,6 +214,7 @@ fois le problème corrigé.
 | --- | --- | --- |
 | Aucune exécution listée | Workflow inactif, ou Cloudinary n'a pas joint n8n | Activer le workflow (interrupteur en haut à droite) ; vérifier tunnel et URL |
 | Rouge sur *Vérifier la signature*, `access to env vars denied` | `N8N_BLOCK_ENV_ACCESS_IN_NODE` non défini | Relancer n8n avec `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` |
+| Rouge sur *Vérifier la signature*, `crypto is not defined` | Ancienne version du nœud | Recoller le code de `noeud-verification-signature.js` |
 | Rouge sur *Vérifier la signature*, autre message | `CLOUDINARY_API_SECRET` absent ou faux | Relancer n8n avec la bonne valeur |
 | `statut: "ignoree"` | Tag `portfolio` manquant, ou photo déjà publiée | Ajouter le tag et relancer l'exécution |
 | Erreur 409 sur le commit | Deux uploads simultanés | Relancer l'exécution, sans rien changer |
