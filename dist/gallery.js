@@ -138,7 +138,16 @@
     var container = document.getElementById("gallery");
     if (!container) return;
 
-    fetch(container.dataset.source || "photos.json")
+    // `cache: "no-cache"` force une requête conditionnelle : le navigateur
+    // demande au serveur si le fichier a changé, en joignant son ETag.
+    //
+    // Sans cela, GitHub Pages sert photos.json avec `Cache-Control: max-age=600`
+    // et le navigateur ressert sa copie pendant dix minutes sans rien demander :
+    // un visiteur déjà venu ne verrait pas une photo publiée entre-temps.
+    //
+    // Le surcoût est négligeable — si rien n'a changé, le serveur répond 304
+    // sans corps, et la copie locale est réutilisée.
+    fetch(container.dataset.source || "photos.json", { cache: "no-cache" })
       .then(function (response) {
         if (!response.ok) throw new Error("HTTP " + response.status);
         return response.json();
