@@ -36,18 +36,28 @@ Dans n8n, créez une credential **Header Auth** nommée `GitHub portfolio` :
 
 Le workflow vérifie que chaque notification vient réellement de Cloudinary. Il
 lui faut pour cela votre *API Secret* Cloudinary (Settings → Access Keys), fourni
-par variable d'environnement — jamais en dur dans le workflow :
+par variable d'environnement — jamais en dur dans le workflow, car un workflow
+exporté part avec ses valeurs.
+
+n8n lit ses variables d'environnement **au démarrage** : il faut donc le
+relancer avec la variable définie.
 
 ```bash
-CLOUDINARY_API_SECRET=votre_api_secret
-NODE_FUNCTION_ALLOW_BUILTIN=crypto
+CLOUDINARY_API_SECRET=votre_api_secret n8n start
 ```
 
-La seconde ligne autorise les nœuds Code à utiliser le module de cryptographie
-de Node ; sans elle, la vérification de signature échoue au démarrage.
+Pour ne pas la retaper à chaque fois, ajoutez-la à `~/.zshrc` :
 
-En Docker, ajoutez ces deux lignes au `environment:` du service n8n et
-redémarrez le conteneur.
+```bash
+echo 'export CLOUDINARY_API_SECRET=votre_api_secret' >> ~/.zshrc
+```
+
+En Docker, ajoutez la ligne au `environment:` du service n8n et redémarrez le
+conteneur.
+
+> La vérification de signature utilise l'API Web Crypto, native dans Node.
+> Contrairement au module `crypto` de Node, elle ne demande aucune
+> configuration supplémentaire de n8n.
 
 ## 3. Importer le workflow
 
@@ -77,8 +87,22 @@ Console Cloudinary → **Settings → Webhook Notifications → Add notification
 - **URL** : l'URL de production copiée ci-dessus
 - **Event** : `Upload`
 
-n8n doit être joignable depuis Internet. En local, exposez-le via un tunnel
-(`n8n tunnel`, ngrok, Cloudflare Tunnel).
+n8n doit être joignable depuis Internet : Cloudinary ne peut pas appeler
+`localhost`. Sur une installation locale, exposez-le par un tunnel. L'option
+`--tunnel` intégrée a été retirée dans n8n 2.x, utilisez Cloudflare :
+
+```bash
+brew install cloudflared && cloudflared tunnel --url http://localhost:5678
+```
+
+La commande affiche une URL publique en `https://….trycloudflare.com`.
+Remplacez la partie `http://localhost:5678` de l'URL de production du webhook
+par cette adresse.
+
+> Cette URL change à chaque redémarrage de `cloudflared`, et le tunnel meurt
+> avec le terminal. C'est parfait pour mettre au point, insuffisant pour du
+> permanent : il faudra alors un tunnel Cloudflare nommé (gratuit, URL fixe,
+> demande un domaine) ou héberger n8n en ligne.
 
 ## 5. Réglages Cloudinary conseillés
 
@@ -138,8 +162,12 @@ suffit alors de relancer l'exécution depuis n8n.
    galerie.
 
 **L'exécution est rouge sur la vérification de signature** — `CLOUDINARY_API_SECRET`
-est absent ou incorrect, ou `NODE_FUNCTION_ALLOW_BUILTIN=crypto` n'est pas
-défini.
+est absent ou incorrect. Vérifiez surtout que n8n a bien été **relancé** après
+avoir défini la variable : il ne la relit pas à chaud.
+
+**Aucune exécution n'apparaît** — Cloudinary n'atteint pas n8n. Vérifiez que
+`cloudflared` tourne toujours et que l'URL déclarée dans Cloudinary correspond
+au tunnel en cours.
 
 **L'exécution est verte mais la photo n'apparaît pas** — regardez la réponse du
 webhook : `statut: "ignoree"` signifie que le tag `portfolio` manque sur la
