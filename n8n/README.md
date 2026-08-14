@@ -170,24 +170,32 @@ sans description.
 
 ## Au quotidien : publier de nouvelles photos
 
-### Avant d'uploader, vérifiez que la chaîne est debout
+### Démarrer la chaîne
 
 n8n tourne sur votre Mac : s'il est éteint au moment de l'upload, **Cloudinary
-envoie la notification dans le vide et la photo ne sera jamais publiée**. Deux
-terminaux doivent être ouverts :
+envoie la notification dans le vide et la photo ne sera jamais publiée**. Après
+chaque redémarrage du Mac ou fermeture du terminal, relancez la chaîne :
 
 ```bash
-cloudflared tunnel --url http://localhost:5678
+cd "/Users/ismaelayachi/Site Photo 08:2026/site/n8n" && ./demarrer.sh
 ```
+
+Le script ouvre le tunnel, récupère son adresse, lance n8n avec les trois
+variables nécessaires, et **place l'URL du webhook dans le presse-papiers**. Il
+ne reste qu'à la coller dans Cloudinary (Settings → Webhook Notifications).
+
+Laissez ce terminal ouvert : Ctrl+C arrête l'ensemble.
+
+> **L'URL change à chaque démarrage.** C'est la limite des tunnels
+> `trycloudflare` gratuits, et la cause la plus fréquente de « rien ne se
+> passe ». Tant qu'elle n'est pas reportée dans Cloudinary, les notifications
+> partent vers une adresse morte.
+
+Prérequis, à faire une seule fois :
 
 ```bash
-WEBHOOK_URL=https://votre-tunnel.trycloudflare.com CLOUDINARY_API_SECRET=votre_api_secret N8N_BLOCK_ENV_ACCESS_IN_NODE=false n8n start
+echo 'export CLOUDINARY_API_SECRET=votre_secret' >> ~/.zshrc && source ~/.zshrc
 ```
-
-Si `cloudflared` a été relancé depuis la dernière fois, son URL a changé : il
-faut la reporter dans la commande n8n **et** dans Cloudinary (Settings →
-Webhook Notifications). C'est la cause la plus fréquente de « rien ne se
-passe ».
 
 ### L'upload lui-même
 
