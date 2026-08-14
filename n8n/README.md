@@ -46,7 +46,10 @@ relancer avec la variable définie.
 CLOUDINARY_API_SECRET=votre_api_secret n8n start
 ```
 
-Pour ne pas la retaper à chaque fois, ajoutez-la à `~/.zshrc` :
+Derrière un tunnel, cette commande s'accompagne de `WEBHOOK_URL` — voir
+l'étape 4, qui donne la commande de démarrage complète.
+
+Pour ne pas retaper le secret à chaque fois, ajoutez-le à `~/.zshrc` :
 
 ```bash
 echo 'export CLOUDINARY_API_SECRET=votre_api_secret' >> ~/.zshrc
@@ -80,6 +83,12 @@ sélectionnez la credential `GitHub portfolio` créée à l'étape 1.
 Activez le workflow, puis copiez l'URL de production du nœud **Webhook
 Cloudinary** (bouton *Production URL*).
 
+Ce champ est en lecture seule : n8n le construit à partir de l'adresse qu'il
+pense avoir. Derrière un tunnel, il affiche `http://localhost:5678/...`, que
+Cloudinary ne peut pas joindre. La solution n'est pas de modifier le champ mais
+de déclarer l'adresse publique à n8n au démarrage, via `WEBHOOK_URL` (voir
+l'étape suivante).
+
 ## 4. Brancher Cloudinary
 
 Console Cloudinary → **Settings → Webhook Notifications → Add notification** :
@@ -89,20 +98,38 @@ Console Cloudinary → **Settings → Webhook Notifications → Add notification
 
 n8n doit être joignable depuis Internet : Cloudinary ne peut pas appeler
 `localhost`. Sur une installation locale, exposez-le par un tunnel. L'option
-`--tunnel` intégrée a été retirée dans n8n 2.x, utilisez Cloudflare :
+`--tunnel` intégrée a été retirée dans n8n 2.x, utilisez Cloudflare.
+
+**L'ordre compte** : le tunnel d'abord, car son adresse doit être connue de n8n
+au moment où il démarre.
 
 ```bash
 brew install cloudflared && cloudflared tunnel --url http://localhost:5678
 ```
 
-La commande affiche une URL publique en `https://….trycloudflare.com`.
-Remplacez la partie `http://localhost:5678` de l'URL de production du webhook
-par cette adresse.
+La commande affiche une URL publique en `https://….trycloudflare.com`. Laissez
+ce terminal ouvert, puis relancez n8n en lui donnant cette adresse :
+
+```bash
+WEBHOOK_URL=https://votre-tunnel.trycloudflare.com \
+CLOUDINARY_API_SECRET=votre_api_secret \
+n8n start
+```
+
+Le nœud **Webhook Cloudinary** affiche alors directement la bonne *Production
+URL*, de la forme :
+
+```
+https://votre-tunnel.trycloudflare.com/webhook/cloudinary-photo
+```
+
+C'est cette adresse à coller dans Cloudinary.
 
 > Cette URL change à chaque redémarrage de `cloudflared`, et le tunnel meurt
-> avec le terminal. C'est parfait pour mettre au point, insuffisant pour du
-> permanent : il faudra alors un tunnel Cloudflare nommé (gratuit, URL fixe,
-> demande un domaine) ou héberger n8n en ligne.
+> avec le terminal — il faut alors relancer n8n avec la nouvelle valeur et la
+> remettre à jour dans Cloudinary. C'est parfait pour mettre au point,
+> insuffisant pour du permanent : il faudra alors un tunnel Cloudflare nommé
+> (gratuit, URL fixe, demande un domaine) ou héberger n8n en ligne.
 
 ## 5. Réglages Cloudinary conseillés
 
