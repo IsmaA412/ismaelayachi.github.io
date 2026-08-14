@@ -138,9 +138,11 @@ Dans **Settings → Upload → Upload presets**, sur le preset utilisé :
 - **Tags** : ajoutez `portfolio` pour que les photos partent automatiquement en
   ligne. Sans ce tag, le workflow ignore l'upload — c'est le garde-fou qui vous
   permet de stocker des images sur Cloudinary sans les publier.
-- **Colors** : activez l'analyse des couleurs. La couleur dominante est alors
-  transmise à `photos.json` et sert d'aplat pendant le chargement de la
-  vignette. Facultatif : sans elle, la galerie utilise un gris neutre.
+- **Retrieve predominant colors and histogram** : à cocher. C'est le libellé
+  de l'interface pour le paramètre `colors` de l'API. La couleur dominante de
+  chaque photo est alors transmise à `photos.json` et sert d'aplat pendant le
+  chargement de la vignette. Facultatif : sans elle, la galerie utilise un gris
+  neutre, tout fonctionne pareil.
 
 Le **texte alternatif** se saisit dans la médiathèque Cloudinary, champ `alt`
 des métadonnées contextuelles. Il décrit la photo pour les lecteurs d'écran et
