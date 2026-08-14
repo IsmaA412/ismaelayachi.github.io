@@ -151,6 +151,71 @@ sans description.
 
 ---
 
+## Au quotidien : publier de nouvelles photos
+
+### Avant d'uploader, vérifiez que la chaîne est debout
+
+n8n tourne sur votre Mac : s'il est éteint au moment de l'upload, **Cloudinary
+envoie la notification dans le vide et la photo ne sera jamais publiée**. Deux
+terminaux doivent être ouverts :
+
+```bash
+cloudflared tunnel --url http://localhost:5678
+```
+
+```bash
+WEBHOOK_URL=https://votre-tunnel.trycloudflare.com CLOUDINARY_API_SECRET=votre_api_secret n8n start
+```
+
+Si `cloudflared` a été relancé depuis la dernière fois, son URL a changé : il
+faut la reporter dans la commande n8n **et** dans Cloudinary (Settings →
+Webhook Notifications). C'est la cause la plus fréquente de « rien ne se
+passe ».
+
+### L'upload lui-même
+
+1. Envoyez la photo sur Cloudinary avec le tag **`portfolio`**.
+2. Renseignez le champ **`alt`** dans les métadonnées contextuelles, au moment
+   de l'upload.
+3. Attendez environ une minute.
+
+C'est tout. Aucune commande git, aucun fichier à modifier, aucun HTML à
+toucher. La photo apparaît **en tête de galerie**.
+
+> **Le texte alternatif doit être saisi à l'upload.** La notification part au
+> moment où la photo arrive : un `alt` ajouté plus tard dans la médiathèque ne
+> déclenche rien et n'atteindra jamais le site. Dans ce cas, il faut modifier
+> `photos.json` à la main.
+
+### Si la photo n'apparaît pas
+
+Ouvrez n8n, onglet **Executions**. La notification y est conservée : inutile de
+réenvoyer la photo sur Cloudinary, il suffit de **relancer l'exécution** une
+fois le problème corrigé.
+
+| Symptôme | Cause | Correctif |
+| --- | --- | --- |
+| Aucune exécution listée | Cloudinary n'a pas joint n8n | Tunnel coupé, ou URL périmée dans Cloudinary |
+| Rouge sur *Vérifier la signature* | `CLOUDINARY_API_SECRET` absent ou faux | Relancer n8n avec la bonne valeur |
+| `statut: "ignoree"` | Tag `portfolio` manquant, ou photo déjà publiée | Ajouter le tag et relancer l'exécution |
+| Erreur 409 sur le commit | Deux uploads simultanés | Relancer l'exécution, sans rien changer |
+
+### Retirer une photo, ou changer l'ordre
+
+Ces deux opérations restent manuelles, dans `photos.json` : supprimez l'entrée
+correspondante, ou déplacez-la dans le tableau. L'ordre du tableau est l'ordre
+d'affichage. Supprimer une entrée ne supprime pas la photo de Cloudinary.
+
+### Pour ne plus avoir à y penser
+
+Tant que n8n tourne sur votre Mac, publier suppose que la machine soit allumée
+et les deux terminaux ouverts. Pour une automatisation qui fonctionne même
+Mac éteint, il faut héberger n8n en ligne — n8n Cloud, ou une petite instance
+chez un hébergeur. L'URL du webhook devient alors fixe, et les deux préalables
+ci-dessus disparaissent.
+
+---
+
 ## Ce que fait le workflow, nœud par nœud
 
 | Nœud                               | Rôle                                                                 |
