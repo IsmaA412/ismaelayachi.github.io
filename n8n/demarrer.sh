@@ -68,44 +68,44 @@ if [ -n "${NGROK_DOMAIN:-}" ]; then
     echo >&2
   fi
 fi
-if [ -z "$MODE" ]; then
+if [ -z "${MODE}" ]; then
   command -v cloudflared >/dev/null 2>&1 || {
     echo "✗ Ni ngrok ni cloudflared ne sont installés." >&2; exit 1; }
   MODE="cloudflared"
 fi
 
 # --- repartir propre : restes d'une session précédente -----------------------
-pkill -f "cloudflared tunnel --url http://localhost:$PORT" 2>/dev/null
-pkill -f "ngrok http $PORT" 2>/dev/null
+pkill -f "cloudflared tunnel --url http://localhost:${PORT}" 2>/dev/null
+pkill -f "ngrok http ${PORT}" 2>/dev/null
 pkill -f "$(command -v n8n) start" 2>/dev/null
 sleep 1
-rm -f "$LOG"
+rm -f "${LOG}"
 
 # --- ouverture du tunnel -----------------------------------------------------
-if [ "$MODE" = "ngrok" ]; then
-  echo "→ Ouverture du tunnel ngrok sur $NGROK_DOMAIN…"
-  ngrok http "$PORT" --url "https://$NGROK_DOMAIN" --log stdout >"$LOG" 2>&1 &
-  URL="https://$NGROK_DOMAIN"
+if [ "${MODE}" = "ngrok" ]; then
+  echo "→ Ouverture du tunnel ngrok sur ${NGROK_DOMAIN}..."
+  ngrok http "${PORT}" --url "https://${NGROK_DOMAIN}" --log stdout >"${LOG}" 2>&1 &
+  URL="https://${NGROK_DOMAIN}"
 else
-  echo "→ Ouverture d'un tunnel cloudflared temporaire…"
-  cloudflared tunnel --url "http://localhost:$PORT" >"$LOG" 2>&1 &
+  echo "→ Ouverture d'un tunnel cloudflared temporaire..."
+  cloudflared tunnel --url "http://localhost:${PORT}" >"${LOG}" 2>&1 &
   URL=""
 fi
 TUNNEL_PID=$!
-trap 'kill $TUNNEL_PID 2>/dev/null' EXIT
+trap 'kill ${TUNNEL_PID} 2>/dev/null' EXIT
 
 # --- attendre que le tunnel soit joignable -----------------------------------
 for _ in $(seq 1 60); do
-  if [ "$MODE" = "cloudflared" ] && [ -z "$URL" ]; then
-    URL=$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOG" 2>/dev/null | head -1)
+  if [ "${MODE}" = "cloudflared" ] && [ -z "${URL}" ]; then
+    URL=$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "${LOG}" 2>/dev/null | head -1)
   fi
-  if [ -n "$URL" ] && curl -s -o /dev/null -m 5 "$URL" 2>/dev/null; then
+  if [ -n "${URL}" ] && curl -s -o /dev/null -m 5 "${URL}" 2>/dev/null; then
     PRET=1; break
   fi
   # ngrok échoue vite et bruyamment : inutile d'attendre 60 s
-  if grep -qiE 'ERR_NGROK|authentication failed|not authorized' "$LOG" 2>/dev/null; then
+  if grep -qiE 'ERR_NGROK|authentication failed|not authorized' "${LOG}" 2>/dev/null; then
     echo "✗ ngrok a refusé de démarrer :" >&2
-    grep -iE 'ERR_NGROK|msg=|err=' "$LOG" | tail -5 >&2
+    grep -iE 'ERR_NGROK|msg=|err=' "${LOG}" | tail -5 >&2
     echo >&2
     echo "  Authtoken manquant ? →  ngrok config add-authtoken VOTRE_TOKEN" >&2
     exit 1
@@ -114,21 +114,21 @@ for _ in $(seq 1 60); do
 done
 
 if [ -z "${PRET:-}" ]; then
-  echo "✗ Le tunnel n'a pas répondu. Journal : $LOG" >&2
-  tail -5 "$LOG" >&2
+  echo "✗ Le tunnel n'a pas répondu. Journal : ${LOG}" >&2
+  tail -5 "${LOG}" >&2
   exit 1
 fi
 
-WEBHOOK="$URL/webhook/cloudinary-photo"
-printf '%s' "$WEBHOOK" | pbcopy
+WEBHOOK="${URL}/webhook/cloudinary-photo"
+printf '%s' "${WEBHOOK}" | pbcopy
 
 echo
 echo "┌───────────────────────────────────────────────────────────────────┐"
 echo "  URL DU WEBHOOK (copiée dans le presse-papiers) :"
 echo
-echo "  $WEBHOOK"
+echo "  ${WEBHOOK}"
 echo
-if [ "$MODE" = "ngrok" ]; then
+if [ "${MODE}" = "ngrok" ]; then
   echo "  ✓ ADRESSE FIXE : elle ne changera plus. Si elle est déjà"
   echo "    enregistrée dans Cloudinary, vous n'avez RIEN à faire."
 else
@@ -141,16 +141,16 @@ echo "  Cloudinary → Settings → Webhook Notifications"
 echo "  Deux événements à cocher :  Upload  et  Delete"
 echo "└───────────────────────────────────────────────────────────────────┘"
 echo
-if [ "$MODE" = "cloudflared" ]; then
+if [ "${MODE}" = "cloudflared" ]; then
   echo "  Pour ne plus jamais avoir à recoller cette URL, voyez la marche à"
   echo "  suivre en tête de ce script (mode ngrok, gratuit, 5 minutes)."
   echo
 fi
-echo "→ Démarrage de n8n… (Ctrl+C pour tout arrêter)"
+echo "→ Démarrage de n8n... (Ctrl+C pour tout arrêter)"
 echo
 
 # --- n8n au premier plan : Ctrl+C arrête l'ensemble --------------------------
-WEBHOOK_URL="$URL" \
-CLOUDINARY_API_SECRET="$CLOUDINARY_API_SECRET" \
+WEBHOOK_URL="${URL}" \
+CLOUDINARY_API_SECRET="${CLOUDINARY_API_SECRET}" \
 N8N_BLOCK_ENV_ACCESS_IN_NODE=false \
 n8n start
