@@ -183,16 +183,39 @@ chaque redémarrage du Mac ou fermeture du terminal, relancez la chaîne :
 cd "/Users/ismaelayachi/Site Photo 08:2026/site/n8n" && ./demarrer.sh
 ```
 
-Le script ouvre le tunnel, récupère son adresse, lance n8n avec les trois
-variables nécessaires, et **place l'URL du webhook dans le presse-papiers**. Il
-ne reste qu'à la coller dans Cloudinary (Settings → Webhook Notifications).
+Le script ouvre le tunnel, lance n8n avec les trois variables nécessaires, et
+place l'URL du webhook dans le presse-papiers. Laissez ce terminal ouvert :
+Ctrl+C arrête l'ensemble.
 
-Laissez ce terminal ouvert : Ctrl+C arrête l'ensemble.
+### Rendre l'URL permanente (fortement conseillé)
 
-> **L'URL change à chaque démarrage.** C'est la limite des tunnels
-> `trycloudflare` gratuits, et la cause la plus fréquente de « rien ne se
-> passe ». Tant qu'elle n'est pas reportée dans Cloudinary, les notifications
-> partent vers une adresse morte.
+Par défaut le script utilise un tunnel `trycloudflare`, dont **l'adresse change
+à chaque démarrage**. Il faut alors la recoller dans Cloudinary — et l'oublier
+signifie perdre silencieusement chaque upload, sans message d'erreur, sans même
+une exécution en échec dans n8n. C'est de loin la panne la plus fréquente.
+
+ngrok offre un domaine statique gratuit et permanent, ce qui supprime
+définitivement ce report. Mise en place, une seule fois :
+
+1. Compte gratuit sur https://dashboard.ngrok.com/signup
+2. `brew install ngrok`
+3. Authtoken depuis le tableau de bord :
+   `ngrok config add-authtoken VOTRE_TOKEN`
+4. Domaine statique offert (section *Domains*), de la forme
+   `quelque-chose.ngrok-free.app` :
+
+```bash
+echo 'export NGROK_DOMAIN=quelque-chose.ngrok-free.app' >> ~/.zshrc && source ~/.zshrc
+```
+
+`demarrer.sh` bascule alors tout seul en mode permanent. Vous collez l'URL dans
+Cloudinary une dernière fois, et plus jamais ensuite.
+
+Les quotas gratuits — 20 000 requêtes et 1 Go par mois — sont sans commune
+mesure avec quelques notifications par semaine.
+
+> Sans ngrok, le script continue de fonctionner en repli `cloudflared` et vous
+> avertit explicitement, à chaque démarrage, que l'adresse a changé.
 
 Prérequis, à faire une seule fois :
 
