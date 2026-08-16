@@ -22,9 +22,10 @@
 #   2. brew install ngrok
 #   3. Copiez votre authtoken depuis le tableau de bord, puis :
 #        ngrok config add-authtoken VOTRE_TOKEN
-#   4. Relevez votre domaine statique offert (Domains dans le tableau de
-#      bord), de la forme  quelque-chose.ngrok-free.app  puis :
-#        echo 'export NGROK_DOMAIN=quelque-chose.ngrok-free.app' >> ~/.zshrc
+#   4. Copiez votre domaine statique offert depuis le tableau de bord
+#      (section Domains). Il ressemble à trusting-vending-glitch.ngrok-free.dev
+#      — le suffixe varie (.dev ou .app), reprenez-le tel qu'affiché :
+#        echo 'export NGROK_DOMAIN=COLLEZ-ICI-VOTRE-DOMAINE' >> ~/.zshrc
 #        source ~/.zshrc
 #   5. Relancez ce script et collez l'URL affichée dans Cloudinary. C'est la
 #      dernière fois que vous aurez à le faire.

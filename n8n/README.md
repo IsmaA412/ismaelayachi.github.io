@@ -201,12 +201,25 @@ définitivement ce report. Mise en place, une seule fois :
 2. `brew install ngrok`
 3. Authtoken depuis le tableau de bord :
    `ngrok config add-authtoken VOTRE_TOKEN`
-4. Domaine statique offert (section *Domains*), de la forme
-   `quelque-chose.ngrok-free.app` :
+4. Copiez votre domaine statique offert depuis le tableau de bord, section
+   *Domains*. Le suffixe varie selon les comptes (`.ngrok-free.dev` ou
+   `.ngrok-free.app`) : reprenez-le exactement tel qu'affiché, ne recopiez pas
+   l'exemple ci-dessous.
 
 ```bash
-echo 'export NGROK_DOMAIN=quelque-chose.ngrok-free.app' >> ~/.zshrc && source ~/.zshrc
+echo 'export NGROK_DOMAIN=COLLEZ-ICI-VOTRE-DOMAINE' >> ~/.zshrc && source ~/.zshrc
 ```
+
+Vérifiez ensuite que la variable est bien chargée — un `~/.zshrc` comportant
+une erreur de syntaxe s'interrompt en silence, et tout ce qui suit la ligne
+fautive est ignoré :
+
+```bash
+zsh -lic 'echo $NGROK_DOMAIN'
+```
+
+Si la commande n'affiche rien, la variable n'est pas définie : le script
+retombera sur cloudflared sans que rien ne le signale.
 
 `demarrer.sh` bascule alors tout seul en mode permanent. Vous collez l'URL dans
 Cloudinary une dernière fois, et plus jamais ensuite.
