@@ -53,6 +53,12 @@
               "name": "tagRequis",
               "value": "portfolio",
               "type": "string"
+            },
+            {
+              "id": "cfg6",
+              "name": "maxSuppressions",
+              "value": 5,
+              "type": "number"
             }
           ]
         },
@@ -93,37 +99,19 @@
             {
               "id": "c1",
               "operator": {
-                "type": "string",
-                "operation": "equals"
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
               },
-              "leftValue": "={{ $json.notification_type }}",
-              "rightValue": "upload"
-            },
-            {
-              "id": "c2",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              },
-              "leftValue": "={{ $json.resource_type }}",
-              "rightValue": "image"
-            },
-            {
-              "id": "c3",
-              "operator": {
-                "type": "array",
-                "operation": "contains",
-                "rightType": "any"
-              },
-              "leftValue": "={{ $json.tags }}",
-              "rightValue": "={{ $('Configuration').first().json.tagRequis }}"
+              "leftValue": "={{ ($json.notification_type === 'upload' && $json.resource_type === 'image' && Array.isArray($json.tags) && $json.tags.includes($('Configuration').first().json.tagRequis)) || $json.notification_type === 'delete' }}",
+              "rightValue": ""
             }
           ]
         },
         "options": {}
       },
       "id": "filtre",
-      "name": "Photo destinée au portfolio ?",
+      "name": "Notification pertinente ?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
@@ -158,14 +146,20 @@
       "position": [
         660,
         -100
-      ]
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "sY96p7w7tJq3cU4n",
+          "name": "Header Auth account"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "// Insère la nouvelle photo dans photos.json.\n//\n// Le fichier reste la source unique de la galerie : on le lit, on y ajoute une\n// entrée, on le réécrit. Aucune modification de HTML n'est nécessaire.\n\nconst config = $('Configuration').first().json;\nconst photo = $('Vérifier la signature Cloudinary').first().json;\nconst fichier = $('Lire photos.json').first().json;\n\n// L'API GitHub renvoie le contenu encodé en base64.\nconst actuel = JSON.parse(\n  Buffer.from(fichier.content, 'base64').toString('utf8')\n);\n\n// Cloudinary place les métadonnées saisies dans la médiathèque ici. Le texte\n// alternatif décrit la photo pour les lecteurs d'écran et les moteurs de\n// recherche : à renseigner dans Cloudinary, champ « alt ».\nconst contexte = (photo.context && photo.context.custom) || {};\n\n// Couleur dominante, utilisée comme aplat pendant le chargement de la vignette.\n// Cloudinary la fournit sous la forme [[\"#7c6c55\", 34.1], ...], triée par\n// dominance, quand l'option « Retrieve predominant colors and histogram » est\n// cochée sur le preset d'upload. Sinon la galerie retombe sur un gris neutre.\nlet couleur = null;\nif (Array.isArray(photo.colors) && photo.colors.length > 0) {\n  const premiere = photo.colors[0];\n  const brut = Array.isArray(premiere) ? premiere[0] : premiere;\n  // Cette valeur finit telle quelle dans une propriété CSS de la page. On\n  // refuse tout ce qui n'est pas un code hexadécimal : mieux vaut le gris par\n  // défaut qu'un aplat invisible ou une déclaration CSS cassée.\n  if (typeof brut === 'string' && /^#[0-9a-f]{6}$/i.test(brut.trim())) {\n    couleur = brut.trim().toLowerCase();\n  }\n}\n\nconst nouvelle = {\n  id: photo.public_id,\n  version: String(photo.version),\n  format: photo.format,\n  width: photo.width,\n  height: photo.height,\n  alt: contexte.alt || contexte.caption || '',\n};\nif (couleur) {\n  nouvelle.color = couleur;\n}\n\n// Cloudinary peut renvoyer plusieurs fois la même notification. Sans ce filtre,\n// la photo apparaîtrait en double dans la galerie.\nconst dejaPresente = actuel.photos.some((p) => p.id === nouvelle.id);\nif (dejaPresente) {\n  return [\n    {\n      json: {\n        ignore: true,\n        raison: `Photo « ${nouvelle.id} » déjà présente dans photos.json.`,\n      },\n    },\n  ];\n}\n\n// Les nouveautés en tête de galerie.\nactuel.photos.unshift(nouvelle);\n\nconst contenu = JSON.stringify(actuel, null, 2) + '\\n';\n\nreturn [\n  {\n    json: {\n      ignore: false,\n      photo: nouvelle,\n      total: actuel.photos.length,\n      sha: fichier.sha,\n      message: `Ajout de la photo ${nouvelle.id}`,\n      contenuBase64: Buffer.from(contenu, 'utf8').toString('base64'),\n      urlContenu: `https://api.github.com/repos/${config.proprietaire}/${config.depot}/contents/${config.chemin}`,\n      branche: config.branche,\n    },\n  },\n];\n"
+        "jsCode": "// Applique la notification Cloudinary à photos.json : ajout ou retrait.\n//\n// photos.json est la seule source de la galerie. Ce nœud le lit, le modifie en\n// mémoire et renvoie le contenu à commiter ; index.html n'est jamais touché.\n\nconst config = $('Configuration').first().json;\nconst notification = $('Vérifier la signature Cloudinary').first().json;\nconst fichier = $('Lire photos.json').first().json;\n\n// L'API GitHub renvoie le contenu encodé en base64.\nconst actuel = JSON.parse(\n  Buffer.from(fichier.content, 'base64').toString('utf8')\n);\nif (!Array.isArray(actuel.photos)) {\n  throw new Error(\"photos.json est illisible : « photos » n'est pas une liste.\");\n}\n\nconst ignorer = (raison) => [{ json: { ignore: true, raison } }];\n\n// Prépare la sortie destinée au nœud de commit.\nconst aCommiter = (message, resume) => {\n  const contenu = JSON.stringify(actuel, null, 2) + '\\n';\n  return [\n    {\n      json: {\n        ignore: false,\n        message,\n        total: actuel.photos.length,\n        sha: fichier.sha,\n        contenuBase64: Buffer.from(contenu, 'utf8').toString('base64'),\n        urlContenu: `https://api.github.com/repos/${config.proprietaire}/${config.depot}/contents/${config.chemin}`,\n        branche: config.branche,\n        ...resume,\n      },\n    },\n  ];\n};\n\n// ---------------------------------------------------------------- SUPPRESSION\nif (notification.notification_type === 'delete') {\n  const ressources = Array.isArray(notification.resources)\n    ? notification.resources\n    : [];\n\n  // Une notification de suppression ne porte pas de tags : impossible d'y\n  // vérifier que la photo appartenait au portfolio. Sa présence dans\n  // photos.json en tient lieu — ce qui n'y figure pas ne peut pas en sortir.\n  // Une suppression groupée en vise plusieurs à la fois, d'où la liste.\n  const idsSupprimes = new Set(\n    ressources\n      .filter((r) => r && (!r.resource_type || r.resource_type === 'image'))\n      .map((r) => r.public_id)\n      .filter((id) => typeof id === 'string' && id.length > 0)\n  );\n\n  const retirees = actuel.photos\n    .filter((p) => idsSupprimes.has(p.id))\n    .map((p) => p.id);\n\n  if (retirees.length === 0) {\n    return ignorer(\n      'Aucune des photos supprimées ne figurait dans photos.json.'\n    );\n  }\n\n  // Garde-fou : une suppression groupée malencontreuse dans la médiathèque\n  // Cloudinary viderait la galerie sans confirmation. Au-delà de la limite,\n  // l'exécution s'arrête en erreur et rien n'est commité.\n  const limite = Number(config.maxSuppressions);\n  if (Number.isFinite(limite) && limite > 0 && retirees.length > limite) {\n    throw new Error(\n      `${retirees.length} photos seraient retirées en une fois, au-delà de la ` +\n        `limite de ${limite}. Rien n'a été commité. Relever « maxSuppressions » ` +\n        'dans le nœud Configuration, ou modifier photos.json à la main.'\n    );\n  }\n\n  actuel.photos = actuel.photos.filter((p) => !idsSupprimes.has(p.id));\n\n  return aCommiter(\n    retirees.length === 1\n      ? `Retrait de la photo ${retirees[0]}`\n      : `Retrait de ${retirees.length} photos`,\n    { action: 'supprimee', photos: retirees }\n  );\n}\n\n// --------------------------------------------------------------------- AJOUT\n// Cloudinary place les métadonnées saisies dans la médiathèque ici. Le texte\n// alternatif décrit la photo pour les lecteurs d'écran et les moteurs de\n// recherche : à renseigner dans Cloudinary, champ « alt ».\nconst contexte = (notification.context && notification.context.custom) || {};\n\n// Couleur dominante, utilisée comme aplat pendant le chargement de la vignette.\n// Cloudinary la fournit sous la forme [[\"#7c6c55\", 34.1], ...], triée par\n// dominance, quand l'option « Retrieve predominant colors and histogram » est\n// cochée sur le preset d'upload. Sinon la galerie retombe sur un gris neutre.\nlet couleur = null;\nif (Array.isArray(notification.colors) && notification.colors.length > 0) {\n  const premiere = notification.colors[0];\n  const brut = Array.isArray(premiere) ? premiere[0] : premiere;\n  // Cette valeur finit telle quelle dans une propriété CSS de la page. On\n  // refuse tout ce qui n'est pas un code hexadécimal : mieux vaut le gris par\n  // défaut qu'un aplat invisible ou une déclaration CSS cassée.\n  if (typeof brut === 'string' && /^#[0-9a-f]{6}$/i.test(brut.trim())) {\n    couleur = brut.trim().toLowerCase();\n  }\n}\n\nconst nouvelle = {\n  id: notification.public_id,\n  version: String(notification.version),\n  format: notification.format,\n  width: notification.width,\n  height: notification.height,\n  alt: contexte.alt || contexte.caption || '',\n};\nif (couleur) {\n  nouvelle.color = couleur;\n}\n\n// Cloudinary peut renvoyer plusieurs fois la même notification. Sans ce filtre,\n// la photo apparaîtrait en double dans la galerie.\nif (actuel.photos.some((p) => p.id === nouvelle.id)) {\n  return ignorer(`Photo « ${nouvelle.id} » déjà présente dans photos.json.`);\n}\n\n// Les nouveautés en tête de galerie.\nactuel.photos.unshift(nouvelle);\n\nreturn aCommiter(`Ajout de la photo ${nouvelle.id}`, {\n  action: 'publiee',\n  photo: nouvelle,\n  photos: [nouvelle.id],\n});\n"
       },
       "id": "construire",
-      "name": "Ajouter la photo",
+      "name": "Modifier photos.json",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -198,7 +192,7 @@
         "options": {}
       },
       "id": "filtre-doublon",
-      "name": "Nouvelle photo ?",
+      "name": "Changement à commiter ?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
@@ -237,12 +231,18 @@
       "position": [
         1320,
         -180
-      ]
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "sY96p7w7tJq3cU4n",
+          "name": "Header Auth account"
+        }
+      }
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ statut: 'publiee', photo: $('Ajouter la photo').first().json.photo.id, total: $('Ajouter la photo').first().json.total }) }}",
+        "responseBody": "={{ JSON.stringify({ statut: $('Modifier photos.json').first().json.action, photos: $('Modifier photos.json').first().json.photos, total: $('Modifier photos.json').first().json.total }) }}",
         "options": {}
       },
       "id": "reponse-ok",
@@ -297,14 +297,14 @@
       "main": [
         [
           {
-            "node": "Photo destinée au portfolio ?",
+            "node": "Notification pertinente ?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Photo destinée au portfolio ?": {
+    "Notification pertinente ?": {
       "main": [
         [
           {
@@ -326,25 +326,25 @@
       "main": [
         [
           {
-            "node": "Ajouter la photo",
+            "node": "Modifier photos.json",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Ajouter la photo": {
+    "Modifier photos.json": {
       "main": [
         [
           {
-            "node": "Nouvelle photo ?",
+            "node": "Changement à commiter ?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Nouvelle photo ?": {
+    "Changement à commiter ?": {
       "main": [
         [
           {

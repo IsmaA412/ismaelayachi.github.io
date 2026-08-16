@@ -74,6 +74,13 @@ cat <<INFO
 
   Cette adresse change à chaque démarrage. Collez-la dans Cloudinary :
   Settings → Webhook Notifications → votre notification → URL
+
+  Deux événements doivent y être cochés :
+    • Upload  → publie la photo sur le site
+    • Delete  → la retire du site
+
+  Sans « Delete », les suppressions faites dans Cloudinary laisseront
+  une case vide dans la galerie.
 └─────────────────────────────────────────────────────────────────┘
 
 → Démarrage de n8n… (Ctrl+C pour tout arrêter)

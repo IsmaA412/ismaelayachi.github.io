@@ -110,7 +110,10 @@ l'étape suivante).
 Console Cloudinary → **Settings → Webhook Notifications → Add notification** :
 
 - **URL** : l'URL de production copiée ci-dessus
-- **Event** : `Upload`
+- **Events** : cochez **`Upload`** *et* **`Delete`**
+
+`Upload` publie la photo, `Delete` la retire. Sans `Delete`, une photo
+supprimée de Cloudinary continuerait d'occuper une case vide dans la galerie.
 
 n8n doit être joignable depuis Internet : Cloudinary ne peut pas appeler
 `localhost`. Sur une installation locale, exposez-le par un tunnel. L'option
@@ -250,10 +253,10 @@ ci-dessus disparaissent.
 | **Webhook Cloudinary**             | Reçoit la notification. `Raw Body` activé — indispensable, voir plus bas. |
 | **Configuration**                  | Regroupe dépôt, branche et tag en un seul endroit modifiable.          |
 | **Vérifier la signature Cloudinary** | Rejette toute requête non signée, falsifiée ou rejouée.              |
-| **Photo destinée au portfolio ?**  | Ne laisse passer que les uploads d'images portant le tag requis.       |
+| **Notification pertinente ?**      | Laisse passer les uploads d'images portant le tag requis, et les suppressions. |
 | **Lire photos.json**               | Récupère le fichier et son `sha` (exigé par GitHub pour écrire).       |
-| **Ajouter la photo**               | Ajoute l'entrée en tête de liste et réencode le fichier.               |
-| **Nouvelle photo ?**               | Bloque les notifications en double envoyées par Cloudinary.            |
+| **Modifier photos.json**           | Ajoute l'entrée en tête de liste, ou retire les photos supprimées.     |
+| **Changement à commiter ?**        | Bloque les doublons et les suppressions sans effet.                    |
 | **Commit photos.json**             | Écrit le fichier. GitHub Pages redéploie tout seul.                    |
 
 ### Pourquoi « Raw Body » est obligatoire
@@ -301,14 +304,34 @@ photo, ou qu'elle est déjà dans `photos.json`.
 
 ---
 
-## Retirer une photo du site
+## Supprimer une photo
 
-Supprimez son entrée dans `photos.json` et commitez. La photo reste sur
-Cloudinary : le site et le stockage sont indépendants, ce qui permet d'archiver
-sans publier.
+Supprimez-la depuis la médiathèque Cloudinary : elle disparaît du site dans la
+minute, sans autre manipulation.
+
+L'appartenance au portfolio ne peut pas être vérifiée à la suppression — une
+notification `delete` de Cloudinary ne porte aucun tag, contrairement à un
+upload. Le workflow retire donc simplement les entrées dont l'identifiant
+figure dans `photos.json` : ce qui n'y est pas ne peut pas en sortir.
+
+### Le garde-fou
+
+Le champ `maxSuppressions` du nœud **Configuration** (5 par défaut) limite le
+nombre de photos qu'une seule notification peut retirer. Au-delà, l'exécution
+s'arrête en erreur et **rien n'est commité** : une sélection multiple
+malencontreuse dans la médiathèque ne peut pas vider la galerie d'un coup.
+
+Pour un grand ménage volontaire, relevez la valeur, ou modifiez `photos.json`
+directement. Et rien n'est jamais perdu : chaque état du fichier reste dans
+l'historique git.
+
+### Retirer du site sans supprimer de Cloudinary
+
+Supprimez l'entrée correspondante dans `photos.json` et commitez. L'original
+reste stocké sur Cloudinary, il disparaît seulement du portfolio.
 
 ## Changer l'ordre des photos
 
 L'ordre du tableau `photos` est l'ordre d'affichage. Le workflow insère les
 nouveautés en tête ; pour les mettre en fin de galerie, remplacez `unshift` par
-`push` dans le nœud **Ajouter la photo**.
+`push` dans le nœud **Modifier photos.json**.
